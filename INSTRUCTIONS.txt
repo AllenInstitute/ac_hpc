@@ -1,0 +1,27 @@
+---- Instructions for using the HPC scripts ----
+
+
+Method Descriptions:
+-Connect_Strips: connect fragments from overlapping skeleton volumes
+-Contrast: equalize the contrast of an image volume, processing it either in full or chunked; make sure boundaries are multiples of the iteration size
+-Copy_S3: copy a volume to an S3 bucket
+-Deskew: optionally dekew and downsample an image volume to a specified mip level
+-Downsample: downsample an image volume to a specified mip level
+-Reconnect_Skels: postprocess a skeleton volume, including breaking, smoothing, reconnecting fragments
+-Segment: segment an image volume, processing it either in full or chunked
+-Skeletonize: skeletonize an image volume
+-Mask: create a binary processing mask for an image volume
+
+
+File descriptions:
+-job.sh: slurm job submission script to specify run parameters and initiate nextflow script
+-main.nf: nextflow script that submits the slurm jobs
+-slurm.config: specifies HPC parameters, including docker image name, estimated time, cpu number, memory allocation, max forks
+-submit.py: contains main python script for method
+-in_files.txt: specifies the input file names
+-bounds.txt: if running a chunked method, specifies the different xyz boundaries
+
+
+General execution instructions: The SUBMISSION_SCRIPT.py file will let you submit a request for a particular method, and easily flag which parameters are needed for each.
+
+

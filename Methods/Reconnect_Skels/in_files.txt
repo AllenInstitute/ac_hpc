@@ -1,0 +1,5 @@
+/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Skeletonize/output/POS1.zarr.swcs.tar.gz
+/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Skeletonize/output/POS2.zarr.swcs.tar.gz
+/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Skeletonize/output/POS3.zarr.swcs.tar.gz
+/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Skeletonize/output/POS4.zarr.swcs.tar.gz
+/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Skeletonize/output/POS5.zarr.swcs.tar.gz

@@ -1,0 +1,1 @@
+/allen/aind/stage/svc_axonal/hpc/segment/H17_PO11_S8_20250408/exaSPIM_0_0.zarr.zarr

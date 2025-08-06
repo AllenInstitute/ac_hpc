@@ -1,0 +1,1 @@
+/allen/aind/stage/svc_axonal/hpc/deskewed/H17_PO11_S8_20250408/exaSPIM_4_0.zarr/exaSPIM_4_0.zarr/
