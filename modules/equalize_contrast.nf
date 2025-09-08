@@ -28,7 +28,7 @@ Channel
     .set { pairings }
 
 // Process
-process createContainer {
+process Contrast_Equalize {
 
     input:
     tuple val(in_file), val(bound)
@@ -43,5 +43,5 @@ process createContainer {
 }
 
 workflow {
-    createContainer(pairings)
+    Contrast_Equalize(pairings)
 }

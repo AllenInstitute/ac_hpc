@@ -2,13 +2,9 @@
 
 nextflow.enable.dsl=2
 
-params.out_dir = ''  
-params.in_files = ''
-params.sc='/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Reconnect_Skels/model/scaler.joblib'
-params.cl='/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Reconnect_Skels/model/LR_1.joblib'    
 in_files = Channel.fromPath(params.in_files).splitText()
 
-process createContainer {
+process Postprocess_Skels {
     input:
     val in_file
 
@@ -23,5 +19,5 @@ process createContainer {
 }
 
 workflow {
-    createContainer(in_files)
+    Postprocess_Skels(in_files)
 }

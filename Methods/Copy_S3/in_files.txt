@@ -1,6 +1,0 @@
-/allen/aind/stage/svc_axonal/hpc/contrast/exaSPIM_H17_PO11_S8_20250408_070125/exaSPIM_0_0.zarr/
-/allen/aind/stage/svc_axonal/hpc/contrast/exaSPIM_H17_PO11_S8_20250408_070125/exaSPIM_2_0.zarr/
-/allen/aind/stage/svc_axonal/hpc/contrast/exaSPIM_H17_PO11_S8_20250408_070125/exaSPIM_3_0.zarr/
-/allen/aind/stage/svc_axonal/hpc/contrast/exaSPIM_H17_PO11_S8_20250408_070125/exaSPIM_4_0.zarr/
-/allen/aind/stage/svc_axonal/hpc/contrast/exaSPIM_H17_PO11_S8_20250408_070125/exaSPIM_5_0.zarr/
-/allen/aind/stage/svc_axonal/hpc/contrast/exaSPIM_H17_PO11_S8_20250408_070125/exaSPIM_6_0.zarr/
