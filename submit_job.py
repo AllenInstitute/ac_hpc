@@ -9,6 +9,7 @@ from pathlib import Path
 import itertools
 from datetime import datetime
 import glob
+import numpy as np
 
 
 REPO_DIR = Path(__file__).resolve().parent
@@ -83,7 +84,23 @@ def build_job_script(
         slurm_out=slurm_out,
         date_str=date_str
     )
+    
+    
+    
+required_params_map = {
+    "segment": ["weights_file", "seg_out_dir"],
+    "skeletonize": ["skel_out_dir"],
+    "postprocess": ["postprocess_out_dir"],
+    "deskew": ["deskew_out_dir"]
+}
 
+
+def check_required_params(method, args, required_params_map):
+    method_args = args.get(method) or {}
+    required_fields = required_params_map[method]
+    missing = [f for f in required_fields if not method_args.get(f)]
+    if missing:
+        raise ValueError(f"Missing required parameters for '{method}' method: {missing}")
 
 class NextflowFiles(argschema.ArgSchema):
     config_file = argschema.fields.String(
@@ -102,40 +119,37 @@ class CloudOptions(argschema.ArgSchema):
     region = argschema.fields.String(required=False, dump_default='us-west-2')
     endpoint = argschema.fields.String(required=False, dump_default=None, allow_none=True)
     profile = argschema.fields.String(required=False, dump_default=None, allow_none=True)
+    
+    
+    
+class EqualizeParameters(argschema.ArgSchema):
+    equal_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
 
-class DeskewParameters(argschema.ArgSchema):
-    deskew_in_files = argschema.fields.String(required=True, dump_default=str(REPO_DIR / "inputs" / "in_files.txt"))
+class DeskewZarrParameters(argschema.ArgSchema):
     deskew_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
-    deskew_method = argschema.fields.String(required=False, dump_default='ps')
-    deskew_stride = argschema.fields.Int(required=False, dump_default=2)
-    deskew_transpose = argschema.fields.Boolean(required=False, dump_default=True)
-    deskew_flip = argschema.fields.Boolean(required=False, dump_default=False)
+    deskew_options = argschema.fields.String(required=True, dump_default='{"deskew_method": "ps", "deskew_stride": 2, "deskew_transpose": "True", "deskew_flip": "False"}')
+    max_mip = argschema.fields.Int(required=False, dump_default=5)
 
 class SegmentParameters(argschema.ArgSchema):
-    seg_in_files = argschema.fields.String(required=True, dump_default=str(REPO_DIR / "inputs" /  "in_files.txt"))
     weights_file = argschema.fields.String(required=True, dump_default=None, allow_none=True)
     seg_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
     filter_max_intensity = argschema.fields.Int(required=False, dump_default=30000, allow_none=True)
     rescale_perc = argschema.fields.String(allow_none=True, dump_default='[96,97]')
-    bounds = argschema.fields.String(required=True, dump_default=str(REPO_DIR / "inputs" /  "bounds.txt"))
     dsfactor = argschema.fields.Int(required=False, dump_default=16, allow_none=True)
-    mask_files = argschema.fields.String(required=False, allow_none=True, dump_default=str(REPO_DIR / "inputs" /  "mask_files.txt"))
 
 class SkeletonizeParameters(argschema.ArgSchema):
-    skel_in_files = argschema.fields.String(required=True, dump_default=str(REPO_DIR / "inputs" /  "in_files.txt"))
     skel_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
     probability_threshold = argschema.fields.Float(required=False, dump_default=0.05)
     label_size_threshold = argschema.fields.Int(required=False, dump_default=80)
     n_jobs = argschema.fields.Int(required=False, dump_default=10)
-    bounds = argschema.fields.String(required=True, dump_default=str(REPO_DIR / "inputs" /  "bounds.txt"))
-    output_json = argschema.fields.OutputFile(required=False, allow_none=True)
-    
     
 class PostprocessParameters(argschema.ArgSchema):
     postprocess_in_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
-    postprocess_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
-    output_json = argschema.fields.OutputFile(required=False, allow_none=True)
-
+    postprocess_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True) 
+    
+class ChunkingParameters(argschema.ArgSchema):
+    chunking_shape = argschema.fields.Raw(required=False, dump_default=None, allow_none=True)
+    num_chunks = argschema.fields.Int(required=False, dump_default=40)
 
 class SlurmOptions(argschema.ArgSchema):
     out_dir = argschema.fields.String(
@@ -144,7 +158,12 @@ class SlurmOptions(argschema.ArgSchema):
 
 class Methods(ArgSchema):
     method = argschema.fields.String(required=True)
-    chunking_shape = argschema.fields.Raw(required=False, dump_default=None, allow_none=True)
+    chunking_params = Nested(ChunkingParameters, required=True, dump_default={
+            'chunking_shape': None,
+            'num_chunks': 40
+        })
+    equalize = Nested(EqualizeParameters, required=False)
+    deskew_zarr = Nested(DeskewZarrParameters, required=False)
     segment = Nested(SegmentParameters, required=False)
     skeletonize = Nested(SkeletonizeParameters, required=False)
     postprocess = Nested(PostprocessParameters, required=False)
@@ -165,10 +184,10 @@ class SubmitJobModule:
         self.args = args
 
     def run(self):
-        hpc_api_url = 'http://hpc.corp.alleninstitute.org:8002/jobs'
+        hpc_api_url = 'http://localhost:8004/jobs'
 
         method = self.args['method']
-        if method == 'seg&skel':
+        if method == 'seg_skel':
             seg_param = self.args['segment']
             skel_param = self.args['skeletonize']
             method_parameters = seg_param | skel_param
@@ -189,11 +208,12 @@ class SubmitJobModule:
             method_parameters=all_parameters,
             slurm_out=slurm_out
         )
-
-        payload = {'script': job_script}
-        response = requests.post(hpc_api_url, json=payload)
         
         print(job_script)
+
+        #payload = {'script': job_script}
+        #response = requests.post(hpc_api_url, json=payload)
+        
 
         if response.ok:
             print("Job submitted successfully!")
@@ -202,31 +222,20 @@ class SubmitJobModule:
             print(f"Failed to submit job: {response.status_code} {response.text}")
 
 
-required_params_map = {
-    "segment": ["weights_file", "seg_out_dir"],
-    "skeletonize": ["skel_out_dir"],
-    "postprocess": ["postprocess_in_dir", "postprocess_out_dir"]
-}
-
-
-def check_required_params(method, args, required_params_map):
-    method_args = args.get(method) or {}
-    required_fields = required_params_map[method]
-    missing = [f for f in required_fields if not method_args.get(f)]
-    if missing:
-        raise ValueError(f"Missing required parameters for '{method}' method: {missing}")
-
 
 if __name__ == "__main__":
     parser = ArgSchemaParser(schema_type=Methods)
     args = parser.args
     method = args.get("method")
-
-    if method == "segment":
+    
+    
+    if 'deskew' in method:
+        check_required_params('deskew', args, required_params_map)
+    elif method == "segment":
         check_required_params('segment', args, required_params_map)
     elif method == "skeletonize":
         check_required_params('skeletonize', args, required_params_map)
-    elif method == "seg&skel":
+    elif method == "seg_skel":
         check_required_params('segment', args, required_params_map)
         check_required_params('skeletonize', args, required_params_map)
     elif method == "postprocess":
@@ -243,18 +252,19 @@ if __name__ == "__main__":
         in_files_path.write_text("\n".join(swc_files))
         print(f"Wrote {len(swc_files)} .swc files to {in_files_path}")     
     else:
-        raise ValueError("Choose one of: segment, skeletonize, seg&skel")
+        raise ValueError("Choose one of: segment, skeletonize, seg_skel")
 
     print(f"All required parameters for method '{method}' are present.")
 
     in_files = [l.strip() for l in Path(str(REPO_DIR / "inputs" /  "in_files.txt")).read_text().splitlines() if l.strip()]
     mask_file_path = Path(str(REPO_DIR / "inputs" /  "mask_files.txt"))
     mask_files = []
-
-    if args.get("chunking_shape"):
+    
+    if args.get("chunking_params")['chunking_shape']:
         bounds = []
-        x, y, z = [int(x.strip("'")) for x in args.get("chunking_shape").split(" ")]
-        inter = list(range(0, x, int(x / 40)))
+        x, y, z = [int(x.strip("'")) for x in args.get("chunking_params")['chunking_shape'].split(" ")]
+        print(x,y,z)
+        inter = list(range(0, x, int(np.ceil(x / args.get("chunking_params")['num_chunks']))))
         for xi in range(len(inter) - 1):
             bounds.append('{0},{1},0,{2},0,{3}'.format(inter[xi], inter[xi + 1], y, z))
 

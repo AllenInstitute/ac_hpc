@@ -3,7 +3,7 @@
 nextflow.enable.dsl=2
 
 // Read file lists (line-for-line pairing)
-def fileList  = file(params.skel_in_files).text.readLines()
+def fileList  = file(params.in_files).text.readLines()
 def boundList = file(params.bounds).text.readLines()
 
 
@@ -27,7 +27,7 @@ process Skeletonize {
     tuple val(in_file), val(bound)
 
     output:
-    path(prob_path), emit: out_path
+    val("${params.skel_out_dir}/\${base_name}.zarr"), emit: out_path
 
     script:
     """
