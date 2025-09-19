@@ -31,7 +31,7 @@ process Contrast_Equalize {
     script:
     """
     base_name=\$(basename ${in_file})
-    command="conda run -n ac python /allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Contrast/cutout/submit.py --input_path ${in_file} --output_path ${params.equal_out_dir}/\${base_name} --cutout ${bound} --dsfactor ${params.dsfactor} --mask_path ${mask_file}"
+    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/gunpowder/equalize_array.py --input_path ${in_file} --output_path ${params.equal_out_dir}/\${base_name} --cutout ${bound} --dsfactor ${params.dsfactor} --mask_path ${mask_file}"
 
     \$command
     """

@@ -34,11 +34,11 @@ process Segment {
     """
     prob_path="${params.seg_out_dir}/${in_file.baseName}.zarr"
 
-    command="conda run -n ac python /allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Segment/cutout/submit.py \
+    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/gunpowder/segment_array.py \
       --weights_file ${params.weights_file} \
       --probability_output "\$prob_path" \
       --input_zarr ${in_file} \
-      --bound_box ${bound} \
+      --cutout ${bound} \
       --dsfactor ${params.dsfactor} \
       --mask_path ${mask_file}"
 

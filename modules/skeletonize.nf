@@ -36,7 +36,7 @@ process Skeletonize {
 
 
     export CLOUD_VOLUME_DIR=/home/
-    command="conda run -n ac python "/allen/programs/celltypes/workgroups/em-connectomics/laughla/Slurm/Skeletonize/cutout/submit.py" --input_zarr ${in_file} --skeleton_output "\$prob_path" --probability_threshold ${params.probability_threshold} --label_size_threshold ${params.skeletonize.label_size_threshold} --n_jobs ${params.skeletonize.n_jobs} --bound_box ${bound}"
+    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/postprocess/skeletonize_array.py --input_zarr ${in_file} --skeleton_output "\$prob_path" --probability_threshold ${params.probability_threshold} --label_size_threshold ${params.skeletonize.label_size_threshold} --n_jobs ${params.skeletonize.n_jobs} --cutout ${bound}"
     \$command \
     
     """
