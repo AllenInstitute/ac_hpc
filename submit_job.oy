@@ -10,11 +10,12 @@ import itertools
 from datetime import datetime
 import glob
 import numpy as np
+import json
 
 
 REPO_DIR = Path(__file__).resolve().parent
 
-job_template = """#!/bin/bash
+slurm_template = """#!/bin/bash
 #SBATCH --job-name="{method_name}"
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
@@ -34,6 +35,8 @@ config_file="{config_file}"
 
 "$NXF_EX" run "$NXF_MAIN" {method_parameters} -c "$config_file" -profile hpc
 """
+
+local_template = """ "{nextflow_exec}" run "{nextflow_main}" {method_parameters} -c "{config_file}" -profile standard """
 
 
 def create_chunked_dims(arr_shape, chunk_size):
@@ -57,41 +60,29 @@ def format_params_for_nextflow(params):
     for k, v in params.items():
         if v is None or k == "log_level":
             continue
-        args.append(f"--{k} {v}")
+        if v == 'None':
+            args.append(f"--{k} '{v}'")
+        else:
+            args.append(f"--{k} {v}")
     return " ".join(args)
-
-
-def build_job_script(
-    method_name: str,
-    nextflow_exec: str,
-    nextflow_main: str,
-    config_file: str,
-    method_parameters: str,
-    slurm_out: str
-) -> str:
-    Path(slurm_out).mkdir(parents=True, exist_ok=True)  # ensure folder exists
     
-    # Get current date only
-    date_str = datetime.now().strftime("%Y%m%d")
     
-    return job_template.format(
-        method_name=method_name,
-        singularity_dir=str(REPO_DIR / "singularity"),
-        nextflow_exec=nextflow_exec,
-        nextflow_main=nextflow_main,
-        config_file=config_file,
-        method_parameters=method_parameters,
-        slurm_out=slurm_out,
-        date_str=date_str
-    )
-    
+def normalize_out_dirs(d):
+    """Recursively remove trailing slashes from any *_out_dir keys in the dict."""
+    for key, value in d.items():
+        if isinstance(value, dict):
+            normalize_out_dirs(value)
+        elif key.endswith("_out_dir") and isinstance(value, str) and value:
+            d[key] = value.rstrip("/")
     
     
 required_params_map = {
     "segment": ["weights_file", "seg_out_dir"],
     "skeletonize": ["skel_out_dir"],
     "postprocess": ["postprocess_out_dir"],
-    "deskew": ["deskew_out_dir"]
+    "equalize": ["equal_out_dir"],
+    "deskew_zarr": ["deskew_out_dir"],
+    "deskew_tiff": ["deskew_out_dir"]    
 }
 
 
@@ -112,7 +103,6 @@ class NextflowFiles(argschema.ArgSchema):
         dump_default=str(REPO_DIR / "modules" / "main.nf")
     )
 
-
 class CloudOptions(argschema.ArgSchema):
     AWS_key = argschema.fields.String(required=False, dump_default=None, allow_none=True)
     AWS_sec_key = argschema.fields.String(required=False, dump_default=None, allow_none=True)
@@ -120,14 +110,18 @@ class CloudOptions(argschema.ArgSchema):
     endpoint = argschema.fields.String(required=False, dump_default=None, allow_none=True)
     profile = argschema.fields.String(required=False, dump_default=None, allow_none=True)
     
-    
-    
 class EqualizeParameters(argschema.ArgSchema):
     equal_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
+    dsfactor = argschema.fields.Int(required=False, dump_default=16, allow_none=True)
 
 class DeskewZarrParameters(argschema.ArgSchema):
     deskew_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
-    deskew_options = argschema.fields.String(required=True, dump_default='{"deskew_method": "ps", "deskew_stride": 2, "deskew_transpose": "True", "deskew_flip": "False"}')
+    deskew_options = argschema.fields.String(required=False, dump_default="{'deskew_method': 'ps', 'deskew_stride': 2, 'deskew_transpose': 'True', 'deskew_flip': 'False'}")
+    max_mip = argschema.fields.Int(required=False, dump_default=5)
+    
+class DeskewTiffParameters(argschema.ArgSchema):
+    deskew_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
+    deskew_options = argschema.fields.String(required=False, dump_default="{'deskew_method': 'ps', 'deskew_stride': 2, 'deskew_transpose': 'True', 'deskew_flip': 'False'}")
     max_mip = argschema.fields.Int(required=False, dump_default=5)
 
 class SegmentParameters(argschema.ArgSchema):
@@ -136,6 +130,7 @@ class SegmentParameters(argschema.ArgSchema):
     filter_max_intensity = argschema.fields.Int(required=False, dump_default=30000, allow_none=True)
     rescale_perc = argschema.fields.String(allow_none=True, dump_default='[96,97]')
     dsfactor = argschema.fields.Int(required=False, dump_default=16, allow_none=True)
+    mip = argschema.fields.Int(required=False, dump_default=0, allow_none=True)
 
 class SkeletonizeParameters(argschema.ArgSchema):
     skel_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
@@ -157,17 +152,23 @@ class SlurmOptions(argschema.ArgSchema):
         dump_default=str(REPO_DIR / "slurm_logs"))
 
 class Methods(ArgSchema):
+    hpc_api_url = argschema.fields.String(required=False, dump_default=None, allow_none=True)
     method = argschema.fields.String(required=True)
+    in_files = argschema.fields.String(required=True, dump_default=str(Path(str(REPO_DIR / "inputs" /  "in_files.txt"))))
+    mask_files = argschema.fields.String(required=True, dump_default=str(Path(str(REPO_DIR / "inputs" /  "mask_files.txt"))))
+    bounds = argschema.fields.String(required=True, dump_default=str(Path(str(REPO_DIR / "inputs" /  "bounds.txt"))))
     chunking_params = Nested(ChunkingParameters, required=True, dump_default={
             'chunking_shape': None,
             'num_chunks': 40
         })
+    run_local = argschema.fields.Boolean(required=True, dump_default=False)
     equalize = Nested(EqualizeParameters, required=False)
     deskew_zarr = Nested(DeskewZarrParameters, required=False)
+    deskew_tiff = Nested(DeskewTiffParameters, required=False)
     segment = Nested(SegmentParameters, required=False)
     skeletonize = Nested(SkeletonizeParameters, required=False)
     postprocess = Nested(PostprocessParameters, required=False)
-    cloud_params = Nested(CloudOptions, required=False)
+    cloud_params = Nested(CloudOptions, required=True, dump_default={'AWS_key':'None' , 'AWS_sec_key':'None', 'region':'None', 'endpoint':'None'})
     nf_files = Nested(
         NextflowFiles,
         required=True,
@@ -184,7 +185,7 @@ class SubmitJobModule:
         self.args = args
 
     def run(self):
-        hpc_api_url = 'http://localhost:8004/jobs'
+        #hpc_api_url = 'http://localhost:8004/jobs'
 
         method = self.args['method']
         if method == 'seg_skel':
@@ -194,33 +195,70 @@ class SubmitJobModule:
             
         else:
             method_parameters = self.args[method]
+            print(method_parameters)
+            for k in method_parameters:
+                if k.endswith("_out_dir") and isinstance(method_parameters[k], str) and method_parameters[k]:
+                    method_parameters[k] = method_parameters[k].rstrip("/")
+            print(method_parameters)
             
+        input_params = " --in_files {0} --mask_files {1} --bounds {2} ".format(args["in_files"], args["mask_files"], args["bounds"])
+        cloud_params = format_params_for_nextflow(self.args['cloud_params'])
+        
         nf_params = self.args['nf_files']
-        all_parameters = format_params_for_nextflow(method_parameters)
-
+        all_parameters = format_params_for_nextflow(method_parameters) + input_params + cloud_params
         slurm_out = self.args.get("slurm", {}).get("out_dir") or str(REPO_DIR / "slurm_logs")
-
-        job_script = build_job_script(
-            method_name=method,
-            nextflow_exec=str(REPO_DIR / "nextflow"),
-            nextflow_main=str(Path(self.args['nf_files']['process_file']).with_name(f"{method}.nf")),
-            config_file=self.args['nf_files']['config_file'],
-            method_parameters=all_parameters,
-            slurm_out=slurm_out
-        )
-        
-        print(job_script)
-
-        #payload = {'script': job_script}
-        #response = requests.post(hpc_api_url, json=payload)
-        
-
-        if response.ok:
-            print("Job submitted successfully!")
-            print("Response:", response.json())
+            
+        if self.args['run_local']:
+            job_script = local_template.format(
+                nextflow_exec=str(REPO_DIR / "nextflow"),
+                nextflow_main=str(Path(self.args['nf_files']['process_file']).with_name(f"{method}.nf")),
+                method_parameters=all_parameters,
+                config_file=self.args['nf_files']['config_file'])
+                      
         else:
-            print(f"Failed to submit job: {response.status_code} {response.text}")
-
+            date_str = datetime.now().strftime("%Y%m%d")                                   
+            job_script = slurm_template.format(
+                method_name=method,
+                singularity_dir=str(REPO_DIR / "singularity"),
+                nextflow_exec=str(REPO_DIR / "nextflow"),
+                nextflow_main=str(Path(self.args['nf_files']['process_file']).with_name(f"{method}.nf")),
+                config_file=self.args['nf_files']['config_file'],
+                method_parameters=all_parameters,
+                slurm_out=slurm_out,
+                date_str=date_str)
+        
+        print(job_script)                                                                                                          
+            
+        if self.args['run_local']:
+            os.system(job_script)          
+            quit()
+                    
+        #slurm logs
+        slurm_dir = Path(REPO_DIR) / "slurm_scripts"
+        slurm_dir.mkdir(exist_ok=True)
+        filename = f"{method}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sh"
+        file_path = slurm_dir / filename
+        with open(file_path, "w") as f:
+            f.write(job_script)
+        print(f"Saved job script to {file_path}")
+        
+        if self.args['hpc_api_url']:                                                                   
+            try:
+    
+                #payload = {'script': job_script}
+                #response = requests.post(self.args['hpc_api_url'], json=payload)
+                        
+                if response.ok:
+                    print("Job submitted successfully!")
+                    print("Response:", response.json())
+                else:
+                    print(f"Failed to submit job: {response.status_code} {response.text}")
+            
+            except Exception as e:
+                print(e) 
+                
+        else:
+            os.system('sbatch {0}'.format(file_path))
 
 
 if __name__ == "__main__":
@@ -228,9 +266,10 @@ if __name__ == "__main__":
     args = parser.args
     method = args.get("method")
     
-    
     if 'deskew' in method:
-        check_required_params('deskew', args, required_params_map)
+        check_required_params(method, args, required_params_map)
+        if 'deskew_zarr' in args and args['deskew_zarr']:
+            args['deskew_zarr']['deskew_options'] = '"' + args['deskew_zarr']['deskew_options'] + '"'
     elif method == "segment":
         check_required_params('segment', args, required_params_map)
     elif method == "skeletonize":
@@ -238,6 +277,8 @@ if __name__ == "__main__":
     elif method == "seg_skel":
         check_required_params('segment', args, required_params_map)
         check_required_params('skeletonize', args, required_params_map)
+    elif method == "equalize":
+        check_required_params('equalize', args, required_params_map)
     elif method == "postprocess":
         check_required_params('postprocess', args, required_params_map)  
         post_dir = args['postprocess']['postprocess_in_dir']
@@ -256,9 +297,12 @@ if __name__ == "__main__":
 
     print(f"All required parameters for method '{method}' are present.")
 
-    in_files = [l.strip() for l in Path(str(REPO_DIR / "inputs" /  "in_files.txt")).read_text().splitlines() if l.strip()]
+    in_files = [l.strip() for l in Path(args["in_files"]).read_text().splitlines() if l.strip()]
+    
+    #declare file paths
     mask_file_path = Path(str(REPO_DIR / "inputs" /  "mask_files.txt"))
     mask_files = []
+
     
     if args.get("chunking_params")['chunking_shape']:
         bounds = []

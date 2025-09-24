@@ -27,16 +27,35 @@ process Skeletonize {
     tuple val(in_file), val(bound)
 
     output:
-    val("${params.skel_out_dir}/\${base_name}.zarr"), emit: out_path
+    val("${params.skel_out_dir}/${last_two_dirs}.zarr"), emit: out_path
 
     script:
     """
-    base_name=\$(basename "${in_file}")
-    prob_path="${params.skel_out_dir}/\${base_name}.zarr"
+    # Extract the last directory and filename of the input file path
+    full_path="${in_file}"
+    # Remove trailing slash if present
+    full_path=\$(echo "\$full_path" | sed 's:/*\$::')
+    # Get the last directory + filename
+    last_dir=\$(echo "\$full_path" | awk -F'/' '{print \$(NF-1) "/" \$NF}')
+    
+    # Form output skeleton path
+    skel_path="${params.skel_out_dir}/\${last_dir}"
 
 
     export CLOUD_VOLUME_DIR=/home/
-    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/postprocess/skeletonize_array.py --input_zarr ${in_file} --skeleton_output "\$prob_path" --probability_threshold ${params.probability_threshold} --label_size_threshold ${params.skeletonize.label_size_threshold} --n_jobs ${params.skeletonize.n_jobs} --cutout ${bound}"
+    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/postprocess/skeletonize_array.py \
+      --input_zarr ${in_file} \
+      --skeleton_output "\$skel_path" \
+      --probability_threshold ${params.probability_threshold} \
+      --label_size_threshold ${params.skeletonize.label_size_threshold} \
+      --n_jobs ${params.skeletonize.n_jobs} \
+      --cutout ${bound} \
+      --AWS_key ${params.AWS_key} \
+      --AWS_sec_key ${params.AWS_sec_key} \
+      --region ${params.region} \
+      --endpoint ${params.endpoint} \
+      --profile ${params.profile}"
+
     \$command \
     
     """

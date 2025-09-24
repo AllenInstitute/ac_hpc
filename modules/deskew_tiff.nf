@@ -26,7 +26,7 @@ process createContainer {
     """
     export TMPDIR="temp/"
 
-    conda run -n ac python /ac_deploy/repos/axonal_connectomics/acpreprocessing/stitching_modules/convert_to_n5/tiff_to_ngff.py --tiffdir ${in_file} --output_n5 ${params.deskew_out_dir} --aws_key ${params.aws_key} --aws_sec_key ${params.aws_sec_key} --out_endpoint ${params.out_endpoint} 
+    conda run -n ac python /ac_deploy/repos/axonal_connectomics/acpreprocessing/stitching_modules/convert_to_n5/tiff_to_ngff.py --tiffdir ${in_file} --output_n5 ${params.deskew_out_dir} --AWS_key ${params.AWS_key} --AWS_sec_key ${params.AWS_sec_key} --endpoint ${params.out_endpoint}
     
     rm -rf \$TMPDIR
     """

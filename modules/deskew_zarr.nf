@@ -10,6 +10,8 @@ in_files = Channel.fromPath("${params.in_files}").flatMap { file ->
 }
 
 def deskew_param = params.deskew_options ? new groovy.json.JsonSlurper().parseText(params.deskew_options.replace("'", "\"")) : [:]
+def deskew_out_dir = params.deskew_out_dir?.replaceAll(/\/+$/, '')
+
 
 process Deskew {
 
@@ -22,7 +24,7 @@ process Deskew {
     """	
 
     base_name=\$(basename ${in_file})
-    command="conda run -n ac python /ac_deploy/repos/axonal_connectomics/acpreprocessing/stitching_modules/convert_to_n5/zarrv3_to_ngff.py --input_file ${in_file} --output_file ${params.deskew_out_dir}\${base_name} --group_names \${base_name} --max_mip ${params.max_mip} --output_format zarr --concurrency 5 --deskew_options.deskew_method ${deskew_param.deskew_method} --deskew_options.deskew_stride ${deskew_param.deskew_stride} --deskew_options.deskew_transpose ${deskew_param.deskew_transpose} --deskew_options.deskew_flip ${deskew_param.deskew_flip} --compression blosc"
+    command="conda run -n ac python /ac_deploy/repos/axonal_connectomics/acpreprocessing/stitching_modules/convert_to_n5/zarrv3_to_ngff.py --input_file ${in_file} --output_file ${params.deskew_out_dir}/\${base_name} --group_names \${base_name} --max_mip ${params.max_mip} --output_format zarr --concurrency 5 --deskew_options.deskew_method ${deskew_param.deskew_method} --deskew_options.deskew_stride ${deskew_param.deskew_stride} --deskew_options.deskew_transpose ${deskew_param.deskew_transpose} --deskew_options.deskew_flip ${deskew_param.deskew_flip} --compression blosc"
 
     \$command \
 

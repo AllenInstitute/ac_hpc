@@ -26,12 +26,25 @@ process Contrast_Equalize {
     label 'equalize_job'
 
     input:
-    tuple path(in_file), val(mask_file), val(bound)
+    tuple val(in_file), val(mask_file), val(bound)
 
     script:
     """
-    base_name=\$(basename ${in_file})
-    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/gunpowder/equalize_array.py --input_path ${in_file} --output_path ${params.equal_out_dir}/\${base_name} --cutout ${bound} --dsfactor ${params.dsfactor} --mask_path ${mask_file}"
+
+    prob_path="${params.equal_out_dir}/${file(in_file).baseName}"
+    in_file=\$(echo "${in_file}" | sed 's:/*\$::')
+
+    command="conda run -n ac python /ac_deploy/repos/ac_segmentation/src/ac_segmentation/gunpowder/equalize_array.py \
+      --input_path "\$in_file/" \
+      --output_path "\$prob_path" \
+      --cutout ${bound} \
+      --dsfactor ${params.dsfactor} \
+      --mask_path ${mask_file} \
+      --AWS_key ${params.AWS_key} \
+      --AWS_sec_key ${params.AWS_sec_key} \
+      --region ${params.region} \
+      --endpoint ${params.endpoint} \
+      --profile ${params.profile}"
 
     \$command
     """
