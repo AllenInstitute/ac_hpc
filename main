@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+# Read Brainlife parameters from config.json
+method=$(jq -r '.method' config.json)
+seg_out=$(jq -r '.segment.seg_out_dir' config.json)
+skel_out=$(jq -r '.skeletonize.skel_out_dir' config.json)
+weights=$(jq -r '.segment.weights_file' config.json)
+run_local=$(jq -r '.run_local' config.json)
+
+# Call submit_job.py exactly like you would on your HPC
+python /app/submit_job.py \
+    --method "$method" \
+    --segment.seg_out_dir "$seg_out" \
+    --skeletonize.skel_out_dir "$skel_out" \
+    --segment.weights_file "$weights" \
+    --run_local "$run_local"
