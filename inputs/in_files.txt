@@ -1,1 +1,1 @@
-/allen/programs/celltypes/workgroups/em-connectomics/laughla/API/test_data/seg/0/
+/allen/programs/celltypes/workgroups/em-connectomics/laughla/API/test_data/zarr2/

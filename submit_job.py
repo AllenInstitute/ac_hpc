@@ -116,12 +116,12 @@ class EqualizeParameters(argschema.ArgSchema):
 
 class DeskewZarrParameters(argschema.ArgSchema):
     deskew_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
-    deskew_options = argschema.fields.String(required=False, dump_default="{'deskew_method': 'ps', 'deskew_stride': 2, 'deskew_transpose': 'True', 'deskew_flip': 'False'}")
+    deskew_options = argschema.fields.String(required=False, dump_default="{'deskew_method': 'None', 'deskew_stride': 1, 'deskew_transpose': 'False', 'deskew_flip': 'False'}")
     max_mip = argschema.fields.Int(required=False, dump_default=5)
     
 class DeskewTiffParameters(argschema.ArgSchema):
     deskew_out_dir = argschema.fields.String(required=True, dump_default=None, allow_none=True)
-    deskew_options = argschema.fields.String(required=False, dump_default="{'deskew_method': 'ps', 'deskew_stride': 2, 'deskew_transpose': 'True', 'deskew_flip': 'False'}")
+    deskew_options = argschema.fields.String(required=False, dump_default="{'deskew_method': 'None', 'deskew_stride': 1, 'deskew_transpose': 'False', 'deskew_flip': 'False'}")
     max_mip = argschema.fields.Int(required=False, dump_default=5)
 
 class SegmentParameters(argschema.ArgSchema):
