@@ -1,5 +1,5 @@
 {
-  "method": "deskew_zarr'",
+  "method": "deskew_tiff",
   "in_files": "inputs/in_files.txt",
-  "deskew_out_dir": "output/segment_results"
+  "deskew_out_dir": "output/deskew_results"
 }

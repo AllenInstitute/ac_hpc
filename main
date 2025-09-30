@@ -1,5 +1,7 @@
 #!/bin/bash
-set -e
+
+#PBS -l nodes=1:ppn=1
+#PBS -l walltime=00:05:00
 
 # Read Brainlife parameters from config.json
 method=$(jq -r '.method' config.json)
@@ -8,9 +10,9 @@ deskew_out_dir=$(jq -r '.deskew_out_dir' config.json)
 
 # Call submit_job.py exactly like you would on your HPC
 pip install argschema
-python /submit_job.py \
+python3 submit_job.py \
     --method "$method" \
-    --segment.deskew_out_dir "$deskew_out_dir" \
+    --deskew_tiff.deskew_out_dir "$deskew_out_dir" \
     --in_files "$in_files"
 
 
