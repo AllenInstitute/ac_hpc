@@ -3,6 +3,7 @@ set -e
 
 # Read Brainlife parameters from config.json
 method=$(jq -r '.method' config.json)
+in_files=$(jq -r '.in_files' config.json)
 seg_out=$(jq -r '.segment.seg_out_dir' config.json)
 weights=$(jq -r '.segment.weights_file' config.json)
 
@@ -11,4 +12,6 @@ pip install argschema
 python /app/submit_job.py \
     --method "$method" \
     --segment.seg_out_dir "$seg_out" \
-    --segment.weights_file "$weights"
+    --segment.weights_file "$weights" \
+    --in_files "$in_files"
+
