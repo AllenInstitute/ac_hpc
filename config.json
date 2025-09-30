@@ -1,11 +1,5 @@
 {
-  "method": "segment",
+  "method": "deskew_zarr'",
   "in_files": "inputs/in_files.txt",
-  "chunking_shape": null,
-  "num_chunks": 40, 
-  "weights_file": "inputs/best.ckpt",
-  "seg_out_dir": "output/segment_results",
-  "filter_max_intensity": 30000,
-  "rescale_perc": "[96,97]",
-  "mip": 0
+  "deskew_out_dir": "output/segment_results"
 }
