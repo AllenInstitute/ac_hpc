@@ -4,27 +4,14 @@ set -e
 # Read Brainlife parameters from config.json
 method=$(jq -r '.method' config.json)
 in_files=$(jq -r '.in_files' config.json)
-seg_out=$(jq -r '.seg_out_dir' config.json)
-weights=$(jq -r '.weights_file' config.json)
-
-filter_max_intensity=$(jq -r '.filter_max_intensity' config.json)
-rescale_perc=$(jq -r '.rescale_perc' config.json)
-mip=$(jq -r '.mip' config.json)
-
-chunking_shape=$(jq -r '.chunking_shape' config.json)
-num_chunks=$(jq -r '.num_chunks' config.json)
+deskew_out_dir=$(jq -r '.deskew_out_dir' config.json)
 
 # Call submit_job.py exactly like you would on your HPC
 pip install argschema
 python /app/submit_job.py \
     --method "$method" \
-    --segment.seg_out_dir "$seg_out" \
-    --segment.weights_file "$weights" \
-    --in_files "$in_files" \
-    --segment.filter_max_intensity "$filter_max_intensity" \
-    --segment.rescale_perc "$rescale_perc" \
-    --segment.mip "$mip" \
-    --chunking_params.chunking_shape "$chunking_shape" \
-    --chunking_params.num_chunks "$num_chunks"
+    --segment.deskew_out_dir "$deskew_out_dir" \
+    --in_files "$in_files"
+
 
 
