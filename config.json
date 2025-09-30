@@ -1,20 +1,11 @@
 {
   "method": "segment",
-  "run_local": true,
-
   "in_files": "inputs/in_files.txt",
-
-  "chunking_params": {
-    "chunking_shape": null,
-    "num_chunks": 40
-  },
-
-  "segment": {
-    "weights_file": "inputs/best.ckpt",
-    "seg_out_dir": "output/segment_results",
-    "filter_max_intensity": 60000,
-    "rescale_perc": "[96,97]",
-    "mip": 0
-  }
+  "chunking_shape": null,
+  "num_chunks": 40, 
+  "weights_file": "inputs/best.ckpt",
+  "seg_out_dir": "output/segment_results",
+  "filter_max_intensity": 30000,
+  "rescale_perc": "[96,97]",
+  "mip": 0
 }
-
