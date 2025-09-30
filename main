@@ -16,7 +16,7 @@ num_chunks=$(jq -r '.num_chunks' config.json)
 
 # Call submit_job.py exactly like you would on your HPC
 pip install argschema
-python /app/submit_job.py \
+python /submit_job.py \
     --method "$method" \
     --segment.seg_out_dir "$seg_out" \
     --segment.weights_file "$weights" \
@@ -26,5 +26,6 @@ python /app/submit_job.py \
     --segment.mip "$mip" \
     --chunking_params.chunking_shape "$chunking_shape" \
     --chunking_params.num_chunks "$num_chunks"
+
 
 
