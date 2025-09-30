@@ -1,39 +1,20 @@
 {
   "method": "segment",
-  "run_local": true,
+  "run_local": True,
 
-  "in_files": "/path/to/inputs/in_files.txt",
-  "mask_files": "/path/to/inputs/mask_files.txt",
-  "bounds": "/path/to/inputs/bounds.txt",
+  "in_files": "inputs/in_files.txt",
 
   "chunking_params": {
-    "chunking_shape": null,
+    "chunking_shape": None,
     "num_chunks": 40
   },
 
   "segment": {
-    "weights_file": "/path/to/model/weights.h5",
-    "seg_out_dir": "/path/to/output/segment_results",
+    "weights_file": "inputs/best.ckpt",
+    "seg_out_dir": "output/segment_results",
     "filter_max_intensity": 30000,
     "rescale_perc": "[96,97]",
     "dsfactor": 16,
     "mip": 0
-  },
-
-  "cloud_params": {
-    "AWS_key": null,
-    "AWS_sec_key": null,
-    "region": "us-west-2",
-    "endpoint": null,
-    "profile": null
-  },
-
-  "nf_files": {
-    "config_file": "/absolute/path/to/modules/main.config",
-    "process_file": "/absolute/path/to/modules/main.nf"
-  },
-
-  "slurm": {
-    "out_dir": "/absolute/path/to/slurm_logs"
   }
 }
