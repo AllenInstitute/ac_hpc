@@ -8,10 +8,11 @@ deskew_out_dir=$(jq -r '.deskew_out_dir' config.json)
 
 # Call submit_job.py exactly like you would on your HPC
 pip install argschema
-python /app/submit_job.py \
+python /submit_job.py \
     --method "$method" \
     --segment.deskew_out_dir "$deskew_out_dir" \
     --in_files "$in_files"
+
 
 
 
