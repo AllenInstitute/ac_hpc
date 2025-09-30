@@ -1,11 +1,11 @@
 {
   "method": "segment",
-  "run_local": True,
+  "run_local": true,
 
   "in_files": "inputs/in_files.txt",
 
   "chunking_params": {
-    "chunking_shape": None,
+    "chunking_shape": null,
     "num_chunks": 40
   },
 
@@ -18,3 +18,4 @@
     "mip": 0
   }
 }
+
