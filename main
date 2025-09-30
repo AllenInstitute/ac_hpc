@@ -1,7 +1,8 @@
 #!/bin/bash
-
-#PBS -l nodes=1:ppn=1
-#PBS -l walltime=00:05:00
+#SBATCH --job-name=segment
+#SBATCH --ntasks=1
+#SBATCH --mem=2G
+#SBATCH --time=00:5:00
 
 # Read Brainlife parameters from config.json
 method=$(jq -r '.method' config.json)
