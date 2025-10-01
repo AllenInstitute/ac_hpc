@@ -258,6 +258,7 @@ class SubmitJobModule:
             print('submited sbatch file')
             current_directory = os.getcwd()
             print(f"Current working directory: {current_directory}")
+            print(os.system("ls -a"))
 
 
 if __name__ == "__main__":
@@ -345,6 +346,7 @@ __all__ = [
     "SubmitJobModule",
     "Methods"
 ]
+
 
 
 
