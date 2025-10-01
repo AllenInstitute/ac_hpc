@@ -6,7 +6,7 @@
 
 # Read Brainlife parameters from config.json
 method=$(jq -r '.method' config.json)
-in_file=$(jq -r '.in_file' config.json)
+single_file=$(jq -r '.single_file' config.json)
 deskew_out_dir=$(jq -r '.deskew_out_dir' config.json)
 
 # Call submit_job.py exactly like you would on your HPC
@@ -14,7 +14,7 @@ pip install argschema
 python3 submit_job.py \
     --method "$method" \
     --deskew_tiff.deskew_out_dir "$deskew_out_dir" \
-    --in_file "$in_file"
+    --single_file "$single_file"
 
 
 
