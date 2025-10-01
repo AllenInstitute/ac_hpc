@@ -1,5 +1,6 @@
 {
   "method": "deskew_tiff",
-  "in_files": "inputs/in_files.txt",
+  "in_file": null,
   "deskew_out_dir": "output/deskew_results"
 }
+
