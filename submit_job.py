@@ -154,6 +154,7 @@ class SlurmOptions(argschema.ArgSchema):
 class Methods(ArgSchema):
     hpc_api_url = argschema.fields.String(required=False, dump_default=None, allow_none=True)
     method = argschema.fields.String(required=True)
+    single_file = argschema.fields.String(required=True, dump_default=None)
     in_files = argschema.fields.String(required=True, dump_default=str(Path(str(REPO_DIR / "inputs" /  "in_files.txt"))))
     mask_files = argschema.fields.String(required=True, dump_default=str(Path(str(REPO_DIR / "inputs" /  "mask_files.txt"))))
     bounds = argschema.fields.String(required=True, dump_default=str(Path(str(REPO_DIR / "inputs" /  "bounds.txt"))))
@@ -195,11 +196,9 @@ class SubmitJobModule:
             
         else:
             method_parameters = self.args[method]
-            print(method_parameters)
             for k in method_parameters:
                 if k.endswith("_out_dir") and isinstance(method_parameters[k], str) and method_parameters[k]:
                     method_parameters[k] = method_parameters[k].rstrip("/")
-            print(method_parameters)
             
         input_params = " --in_files {0} --mask_files {1} --bounds {2} ".format(args["in_files"], args["mask_files"], args["bounds"])
         cloud_params = format_params_for_nextflow(self.args['cloud_params'])
@@ -296,6 +295,10 @@ if __name__ == "__main__":
         raise ValueError("Choose one of: segment, skeletonize, seg_skel")
 
     print(f"All required parameters for method '{method}' are present.")
+    
+    if args["single_file"]:
+        with open(Path(args["in_files"]), "w") as f:
+            f.write("{0}".format(args["single_file"]))
 
     in_files = [l.strip() for l in Path(args["in_files"]).read_text().splitlines() if l.strip()]
     
@@ -307,7 +310,6 @@ if __name__ == "__main__":
     if args.get("chunking_params")['chunking_shape']:
         bounds = []
         x, y, z = [int(x.strip("'")) for x in args.get("chunking_params")['chunking_shape'].split(" ")]
-        print(x,y,z)
         inter = list(range(0, x, int(np.ceil(x / args.get("chunking_params")['num_chunks']))))
         for xi in range(len(inter) - 1):
             bounds.append('{0},{1},0,{2},0,{3}'.format(inter[xi], inter[xi + 1], y, z))
