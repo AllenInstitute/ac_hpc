@@ -19,11 +19,8 @@ slurm_template = """#!/bin/bash
 #SBATCH --job-name="{method_name}"
 #SBATCH --ntasks=1
 #SBATCH --nodes=1
-#SBATCH --output={slurm_out}/%x_%j_{date_str}.out
-#SBATCH --error={slurm_out}/%x_%j_{date_str}.err
 #SBATCH --mem=25G
-#SBATCH --time=60:00:00
-#SBATCH --partition=emconnectome
+#SBATCH --time=30:00:00
 
 export NXF_SINGULARITY_CACHEDIR="{singularity_dir}"
 
@@ -345,3 +342,4 @@ __all__ = [
     "SubmitJobModule",
     "Methods"
 ]
+
