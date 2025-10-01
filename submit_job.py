@@ -255,6 +255,7 @@ class SubmitJobModule:
                 
         else:
             os.system('sbatch {0}'.format(file_path))
+            print('submited sbatch file')
 
 
 if __name__ == "__main__":
@@ -342,4 +343,5 @@ __all__ = [
     "SubmitJobModule",
     "Methods"
 ]
+
 
