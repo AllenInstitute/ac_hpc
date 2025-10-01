@@ -24,7 +24,11 @@ slurm_template = """#!/bin/bash
 
 export NXF_SINGULARITY_CACHEDIR="{singularity_dir}"
 
-module load java/jdk-21.0.3
+export JAVA_HOME=jdk-21
+export PATH=$JAVA_HOME/bin:$PATH
+
+# Optional: check Java version
+java -version
 
 NXF_EX="{nextflow_exec}"
 NXF_MAIN="{nextflow_main}"
@@ -346,6 +350,7 @@ __all__ = [
     "SubmitJobModule",
     "Methods"
 ]
+
 
 
 
