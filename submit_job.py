@@ -24,19 +24,17 @@ slurm_template = """#!/bin/bash
 
 export NXF_SINGULARITY_CACHEDIR="{singularity_dir}"
 
-module load java/jdk-21.0.3
-
 NXF_EX="{nextflow_exec}"
 NXF_MAIN="{nextflow_main}"
 config_file="{config_file}"
 
 # --- Step 1: Download and extract Java 21 into scratch
-wget -q https://download.java.net/java/GA/jdk21/latest/binaries/openjdk-21_linux-x64_bin.tar.gz -O $SLURM_TMPDIR/openjdk21.tar.gz
-tar -xzf $SLURM_TMPDIR/openjdk21.tar.gz -C $SLURM_TMPDIR
-mv $SLURM_TMPDIR/jdk-21* $SLURM_TMPDIR/jdk-21
+wget -q https://download.java.net/java/GA/jdk21/latest/binaries/openjdk-21_linux-x64_bin.tar.gz -O /openjdk21.tar.gz
+tar -xzf /openjdk21.tar.gz
+mv /jdk-21* /jdk-21
 
 # --- Step 2: Set environment variables for Java
-export JAVA_HOME=$SLURM_TMPDIR/jdk-21
+export JAVA_HOME=/jdk-21
 export PATH=$JAVA_HOME/bin:$PATH
 
 # --- Step 3: Optional debug
