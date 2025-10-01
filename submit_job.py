@@ -30,6 +30,18 @@ NXF_EX="{nextflow_exec}"
 NXF_MAIN="{nextflow_main}"
 config_file="{config_file}"
 
+# --- Step 1: Download and extract Java 21 into scratch
+wget -q https://download.java.net/java/GA/jdk21/latest/binaries/openjdk-21_linux-x64_bin.tar.gz -O $SLURM_TMPDIR/openjdk21.tar.gz
+tar -xzf $SLURM_TMPDIR/openjdk21.tar.gz -C $SLURM_TMPDIR
+mv $SLURM_TMPDIR/jdk-21* $SLURM_TMPDIR/jdk-21
+
+# --- Step 2: Set environment variables for Java
+export JAVA_HOME=$SLURM_TMPDIR/jdk-21
+export PATH=$JAVA_HOME/bin:$PATH
+
+# --- Step 3: Optional debug
+java -version
+
 "$NXF_EX" run "$NXF_MAIN" {method_parameters} -c "$config_file" -profile hpc
 """
 
@@ -346,6 +358,7 @@ __all__ = [
     "SubmitJobModule",
     "Methods"
 ]
+
 
 
 
