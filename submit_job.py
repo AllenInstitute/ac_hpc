@@ -256,6 +256,8 @@ class SubmitJobModule:
         else:
             os.system('sbatch {0}'.format(file_path))
             print('submited sbatch file')
+            current_directory = os.getcwd()
+            print(f"Current working directory: {current_directory}")
 
 
 if __name__ == "__main__":
@@ -343,5 +345,6 @@ __all__ = [
     "SubmitJobModule",
     "Methods"
 ]
+
 
 
